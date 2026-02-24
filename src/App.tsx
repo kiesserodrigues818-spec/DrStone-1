@@ -26,7 +26,13 @@ import {
   GraduationCap,
   Stethoscope,
   Syringe,
-  Book
+  Book,
+  Share2,
+  Link as LinkIcon,
+  Download,
+  CloudOff,
+  Database,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -47,6 +53,7 @@ import { twMerge } from 'tailwind-merge';
 
 import { INITIAL_STATS, STUDY_MODULES, type UserStats, type StudyModule } from './types';
 import { generateMedicalQuiz, generateStudyContent, type QuizQuestion } from './services/geminiService';
+import { storageService } from './services/storageService';
 
 // Utility for tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -77,8 +84,28 @@ export default function App() {
   const [quizScore, setQuizScore] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showShareToast, setShowShareToast] = useState(false);
 
   const categories = Array.from(new Set(STUDY_MODULES.map(m => m.category)));
+
+  const handleShare = () => {
+    try {
+      const url = process.env.APP_URL || window.location.origin;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          setShowShareToast(true);
+          setTimeout(() => setShowShareToast(false), 3000);
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+          alert(`Link do DrStone: ${url}`);
+        });
+      } else {
+        alert(`Link do DrStone: ${url}`);
+      }
+    } catch (e) {
+      console.error('Share error', e);
+    }
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -114,6 +141,15 @@ export default function App() {
     setLoading(true);
     setSelectedModule(module);
     setActiveTab('study');
+    
+    // Check offline storage first
+    const offline = storageService.getContent(module.id);
+    if (offline) {
+      setStudyContent(offline.content);
+      setLoading(false);
+      return;
+    }
+
     try {
       const content = await generateStudyContent(module.title);
       setStudyContent(content);
@@ -124,8 +160,23 @@ export default function App() {
     }
   };
 
-  const startQuiz = async (topic: string) => {
+  const startQuiz = async (topic: string, moduleId?: string) => {
     setLoading(true);
+    
+    // Check offline storage first if we have a moduleId
+    if (moduleId) {
+      const offline = storageService.getContent(moduleId);
+      if (offline && offline.quiz && offline.quiz.length > 0) {
+        setQuizQuestions(offline.quiz);
+        setQuizActive(true);
+        setCurrentQuestionIndex(0);
+        setQuizScore(0);
+        setActiveTab('quiz');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const questions = await generateMedicalQuiz(topic);
       setQuizQuestions(questions);
@@ -138,6 +189,31 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveForOffline = async () => {
+    if (!selectedModule || !studyContent) return;
+    setLoading(true);
+    try {
+      // Generate quiz questions to save along with content
+      const questions = await generateMedicalQuiz(selectedModule.title);
+      storageService.saveContent(selectedModule.id, selectedModule.title, studyContent, questions);
+      confetti({
+        particleCount: 50,
+        spread: 30,
+        origin: { y: 0.8 },
+        colors: ['#0ea5e9', '#ffffff']
+      });
+    } catch (error) {
+      console.error("Failed to save for offline", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeOffline = (id: string) => {
+    storageService.removeContent(id);
+    // Force re-render if needed or just let the UI update on next check
   };
 
   const handleAnswer = (index: number) => {
@@ -231,6 +307,29 @@ export default function App() {
             active={false} 
             onClick={() => {}} 
           />
+
+          {Object.keys(storageService.getAllSaved()).length > 0 && (
+            <>
+              <div className="px-4 py-6 mb-2">
+                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Acesso Offline</span>
+              </div>
+              <div className="px-4 space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+                {Object.values(storageService.getAllSaved()).map(item => (
+                  <button 
+                    key={item.id}
+                    onClick={() => {
+                      const module = STUDY_MODULES.find(m => m.id === item.id);
+                      if (module) startStudy(module);
+                    }}
+                    className="w-full text-left px-4 py-2 rounded-lg text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all truncate flex items-center gap-2"
+                  >
+                    <Database size={12} className="text-emerald-500 flex-shrink-0" />
+                    <span className="truncate">{item.topic}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-800/50">
@@ -249,7 +348,7 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto relative">
         {/* Top Header Stats */}
-        <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-bottom border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between transition-colors duration-300">
+        <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between transition-colors duration-300">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
               <Flame className="text-orange-500" size={20} />
@@ -262,12 +361,24 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleShare}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors relative group"
+              title="Compartilhar App"
+            >
+              <Share2 size={20} />
+              <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Copiar Link
+              </span>
+            </button>
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+          </div>
             <div className="flex items-center gap-4 w-64">
               <div className="flex-1">
                 <div className="flex justify-between text-xs mb-1">
@@ -288,6 +399,24 @@ export default function App() {
         </header>
 
         <div className="p-8 max-w-6xl mx-auto">
+          <AnimatePresence>
+            {showShareToast && (
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="fixed bottom-8 right-8 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3"
+              >
+                <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                  <CheckCircle2 size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Link Copiado!</p>
+                  <p className="text-[10px] text-slate-400">Compartilhe o DrStone com seus colegas.</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div
@@ -571,9 +700,16 @@ export default function App() {
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 line-clamp-2">{module.description}</p>
                           )}
                           <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-800/50">
-                            <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                              <Zap size={14} className="text-yellow-500" />
-                              {module.xpReward} XP
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                <Zap size={14} className="text-yellow-500" />
+                                {module.xpReward} XP
+                              </div>
+                              {storageService.isSaved(module.id) && (
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                  <Database size={10} /> SALVO
+                                </div>
+                              )}
                             </div>
                             <button className="text-medical-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
                               Estudar <ArrowRight size={16} />
@@ -592,12 +728,34 @@ export default function App() {
                       >
                         <X size={18} /> Voltar para Biblioteca
                       </button>
-                      <button 
-                        onClick={() => startQuiz(selectedModule.title)}
-                        className="bg-medical-primary text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-medical-primary/90 transition-all shadow-lg shadow-medical-primary/20"
-                      >
-                        Fazer Quiz
-                      </button>
+                      <div className="flex items-center gap-4">
+                        {!storageService.isSaved(selectedModule.id) ? (
+                          <button 
+                            onClick={saveForOffline}
+                            disabled={loading || !studyContent}
+                            className="flex items-center gap-2 text-slate-500 hover:text-medical-primary text-xs font-bold transition-colors disabled:opacity-50"
+                          >
+                            <Download size={16} /> SALVAR OFFLINE
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              removeOffline(selectedModule.id);
+                              // Force update
+                              setSelectedModule({...selectedModule});
+                            }}
+                            className="flex items-center gap-2 text-emerald-500 text-xs font-bold"
+                          >
+                            <Database size={16} /> SALVO
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => startQuiz(selectedModule.title, selectedModule.id)}
+                          className="bg-medical-primary text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-medical-primary/90 transition-all shadow-lg shadow-medical-primary/20"
+                        >
+                          Fazer Quiz
+                        </button>
+                      </div>
                     </div>
 
                     {loading ? (
@@ -630,10 +788,22 @@ export default function App() {
                     </div>
                     <div>
                       <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Desafio Médico Diário</h2>
-                      <p className="text-slate-500 dark:text-slate-400">Teste seus conhecimentos e ganhe XP em dobro hoje!</p>
+                      <p className="text-slate-500 dark:text-slate-400">
+                        {Object.keys(storageService.getAllSaved()).length > 0 
+                          ? "Baseado nos livros que você salvou offline!" 
+                          : "Teste seus conhecimentos e ganhe XP em dobro hoje!"}
+                      </p>
                     </div>
                     <button 
-                      onClick={() => startQuiz("Conhecimento Médico Geral")}
+                      onClick={() => {
+                        const saved = Object.values(storageService.getAllSaved());
+                        if (saved.length > 0) {
+                          const random = saved[Math.floor(Math.random() * saved.length)];
+                          startQuiz(random.topic, random.id);
+                        } else {
+                          startQuiz("Conhecimento Médico Geral");
+                        }
+                      }}
                       disabled={loading}
                       className="bg-medical-primary text-white px-12 py-4 rounded-2xl font-bold text-lg hover:bg-medical-primary/90 transition-all shadow-xl shadow-medical-primary/20 disabled:opacity-50 flex items-center gap-3 mx-auto"
                     >
