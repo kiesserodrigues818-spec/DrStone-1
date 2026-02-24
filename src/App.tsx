@@ -131,6 +131,15 @@ export default function App() {
     if (correct) {
       setQuizScore(prev => prev + 1);
       addXP(50);
+      // Success burst
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.7 },
+        colors: ['#10b981', '#ffffff']
+      });
+    } else {
+      // Subtle error feedback could go here
     }
   };
 
@@ -230,9 +239,11 @@ export default function App() {
                 <span className="text-slate-400">{stats.xp} / {stats.xpToNextLevel}</span>
               </div>
               <div className="xp-bar">
-                <div 
+                <motion.div 
                   className="xp-progress" 
-                  style={{ width: `${(stats.xp / stats.xpToNextLevel) * 100}%` }} 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(stats.xp / stats.xpToNextLevel) * 100}%` }}
+                  transition={{ type: "spring", stiffness: 50, damping: 15 }}
                 />
               </div>
             </div>
@@ -454,31 +465,46 @@ export default function App() {
 
                       <div className="grid grid-cols-1 gap-4">
                         {quizQuestions[currentQuestionIndex].options.map((option, idx) => (
-                          <button
+                          <motion.button
                             key={idx}
                             disabled={selectedAnswer !== null}
                             onClick={() => handleAnswer(idx)}
+                            whileHover={selectedAnswer === null ? { scale: 1.02, x: 5 } : {}}
+                            whileTap={selectedAnswer === null ? { scale: 0.98 } : {}}
+                            animate={
+                              selectedAnswer !== null
+                                ? idx === quizQuestions[currentQuestionIndex].correctAnswer
+                                  ? { scale: [1, 1.05, 1], transition: { duration: 0.3 } }
+                                  : selectedAnswer === idx
+                                    ? { x: [0, -10, 10, -10, 10, 0], transition: { duration: 0.4 } }
+                                    : {}
+                                : {}
+                            }
                             className={cn(
-                              "p-5 rounded-2xl text-left font-medium transition-all border-2",
+                              "p-5 rounded-2xl text-left font-medium transition-all border-2 flex items-center justify-between",
                               selectedAnswer === null 
                                 ? "border-slate-100 hover:border-medical-primary hover:bg-medical-primary/5 text-slate-600"
                                 : idx === quizQuestions[currentQuestionIndex].correctAnswer
-                                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-200/50"
                                   : selectedAnswer === idx
-                                    ? "border-red-500 bg-red-50 text-red-700"
+                                    ? "border-red-500 bg-red-50 text-red-700 shadow-lg shadow-red-200/50"
                                     : "border-slate-100 opacity-50 text-slate-400"
                             )}
                           >
-                            <div className="flex items-center justify-between">
-                              <span>{option}</span>
+                            <span>{option}</span>
+                            <AnimatePresence>
                               {selectedAnswer !== null && idx === quizQuestions[currentQuestionIndex].correctAnswer && (
-                                <CheckCircle2 size={20} />
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                                  <CheckCircle2 size={24} className="text-emerald-500" />
+                                </motion.div>
                               )}
                               {selectedAnswer === idx && idx !== quizQuestions[currentQuestionIndex].correctAnswer && (
-                                <X size={20} />
+                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
+                                  <X size={24} className="text-red-500" />
+                                </motion.div>
                               )}
-                            </div>
-                          </button>
+                            </AnimatePresence>
+                          </motion.button>
                         ))}
                       </div>
 
@@ -569,7 +595,12 @@ export default function App() {
 
 function RewardCard({ title, description, cost, icon, onBuy }: { title: string, description: string, cost: number, icon: React.ReactNode, onBuy: () => void }) {
   return (
-    <div className="glass-panel rounded-2xl p-6 flex flex-col h-full">
+    <motion.div 
+      whileHover={{ y: -8, scale: 1.02 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="glass-panel rounded-2xl p-6 flex flex-col h-full"
+    >
       <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-4">
         {icon}
       </div>
@@ -577,12 +608,12 @@ function RewardCard({ title, description, cost, icon, onBuy }: { title: string, 
       <p className="text-sm text-slate-500 mb-6 flex-1">{description}</p>
       <button 
         onClick={onBuy}
-        className="w-full py-3 rounded-xl border-2 border-yellow-500 text-yellow-600 font-bold hover:bg-yellow-50 transition-all flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-xl border-2 border-yellow-500 text-yellow-600 font-bold hover:bg-yellow-50 transition-all flex items-center justify-center gap-2 active:scale-95"
       >
         <Star size={16} className="fill-yellow-500" />
         {cost} Gemas
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -605,7 +636,12 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
 
 function StatCard({ title, value, subValue, icon }: { title: string, value: string, subValue: string, icon: React.ReactNode }) {
   return (
-    <div className="glass-panel rounded-2xl p-6 flex items-start justify-between">
+    <motion.div 
+      whileHover={{ y: -5 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-panel rounded-2xl p-6 flex items-start justify-between"
+    >
       <div>
         <p className="text-sm font-medium text-slate-400 mb-1">{title}</p>
         <h4 className="text-2xl font-bold text-slate-800 mb-1">{value}</h4>
@@ -614,6 +650,6 @@ function StatCard({ title, value, subValue, icon }: { title: string, value: stri
       <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
         {icon}
       </div>
-    </div>
+    </motion.div>
   );
 }

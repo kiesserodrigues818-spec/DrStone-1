@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined. Please configure it in the Secrets panel.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export interface QuizQuestion {
   question: string;
@@ -10,6 +21,7 @@ export interface QuizQuestion {
 }
 
 export async function generateMedicalQuiz(topic: string): Promise<QuizQuestion[]> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Gere 5 perguntas de quiz médico de alta qualidade sobre: ${topic}. 
@@ -50,6 +62,7 @@ export async function generateMedicalQuiz(topic: string): Promise<QuizQuestion[]
 }
 
 export async function generateStudyContent(topic: string): Promise<string> {
+  const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Escreva um resumo de estudo conciso e de alto rendimento para estudantes de medicina sobre: ${topic}. 
