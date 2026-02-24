@@ -8,24 +8,37 @@
   --color-medical-secondary: #6366f1;
   --color-medical-accent: #10b981;
   --color-medical-bg: #f8fafc;
+  --color-medical-bg-dark: #0f172a;
 }
 
 @layer base {
   body {
-    @apply bg-medical-bg text-slate-900 font-sans;
+    @apply bg-medical-bg text-slate-900 font-sans transition-colors duration-300;
+  }
+  .dark body {
+    @apply bg-medical-bg-dark text-slate-100;
   }
 }
 
 .glass-panel {
-  @apply bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm;
+  @apply bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm transition-colors duration-300;
+}
+.dark .glass-panel {
+  @apply bg-slate-900/80 border-slate-800 shadow-none;
 }
 
 .gamified-card {
   @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer;
 }
+.dark .gamified-card {
+  @apply hover:shadow-medical-primary/10;
+}
 
 .xp-bar {
-  @apply h-2 w-full bg-slate-200 rounded-full overflow-hidden;
+  @apply h-2 w-full bg-slate-200 rounded-full overflow-hidden transition-colors duration-300;
+}
+.dark .xp-bar {
+  @apply bg-slate-800;
 }
 
 .xp-progress {

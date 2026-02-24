@@ -19,7 +19,14 @@ import {
   Award,
   ArrowRight,
   Loader2,
-  X
+  X,
+  Moon,
+  Sun,
+  Library,
+  GraduationCap,
+  Stethoscope,
+  Syringe,
+  Book
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -68,6 +75,18 @@ export default function App() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const categories = Array.from(new Set(STUDY_MODULES.map(m => m.category)));
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const addXP = (amount: number) => {
     setStats(prev => {
@@ -161,57 +180,67 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-medical-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-medical-primary/20">
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-colors duration-300">
+        <div className="p-8 flex items-center gap-3 border-b border-slate-800/50 mb-4">
+          <div className="w-10 h-10 bg-medical-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-medical-primary/40">
             <BrainCircuit size={24} />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-800">DrStone</h1>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-white leading-none">DrStone</h1>
+            <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Medical OS</span>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-1">
+          <div className="px-4 py-2 mb-2">
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Menu Principal</span>
+          </div>
           <SidebarItem 
-            icon={<LayoutDashboard size={20} />} 
+            icon={<LayoutDashboard size={18} />} 
             label="Dashboard" 
             active={activeTab === 'dashboard'} 
             onClick={() => setActiveTab('dashboard')} 
           />
           <SidebarItem 
-            icon={<BookOpen size={20} />} 
-            label="Biblioteca de Estudo" 
+            icon={<Library size={18} />} 
+            label="Biblioteca" 
             active={activeTab === 'study'} 
             onClick={() => setActiveTab('study')} 
           />
           <SidebarItem 
-            icon={<Zap size={20} />} 
+            icon={<Zap size={18} />} 
             label="Quiz Diário" 
             active={activeTab === 'quiz'} 
             onClick={() => setActiveTab('quiz')} 
           />
+          
+          <div className="px-4 py-6 mb-2">
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Gamificação</span>
+          </div>
           <SidebarItem 
-            icon={<Star size={20} />} 
-            label="Loja de Recompensas" 
+            icon={<Star size={18} />} 
+            label="Recompensas" 
             active={activeTab === 'profile'} 
             onClick={() => setActiveTab('profile')} 
           />
           <SidebarItem 
-            icon={<Trophy size={20} />} 
+            icon={<Trophy size={18} />} 
             label="Conquistas" 
             active={false} 
             onClick={() => {}} 
           />
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
-            <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-              <User size={20} className="text-slate-500" />
+        <div className="p-4 border-t border-slate-800/50">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
+              <User size={20} className="text-slate-300" />
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Dr. Estudante</p>
-              <p className="text-xs text-slate-400">Nível {stats.level} Interno</p>
+            <div className="overflow-hidden">
+              <p className="text-xs font-bold text-slate-200 truncate">Dr. Estudante</p>
+              <p className="text-[10px] text-slate-500 font-mono">NÍVEL {stats.level} INTERNO</p>
             </div>
           </div>
         </div>
@@ -220,31 +249,39 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto relative">
         {/* Top Header Stats */}
-        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-bottom border-slate-200 px-8 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-bottom border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between transition-colors duration-300">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
               <Flame className="text-orange-500" size={20} />
-              <span className="font-bold text-slate-700">Sequência de {stats.streak} Dias</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">Sequência de {stats.streak} Dias</span>
             </div>
             <div className="flex items-center gap-2">
               <Star className="text-yellow-500" size={20} />
-              <span className="font-bold text-slate-700">{stats.gems} Gemas</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">{stats.gems} Gemas</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 w-64">
-            <div className="flex-1">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-500 font-medium">XP Nível {stats.level}</span>
-                <span className="text-slate-400">{stats.xp} / {stats.xpToNextLevel}</span>
-              </div>
-              <div className="xp-bar">
-                <motion.div 
-                  className="xp-progress" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(stats.xp / stats.xpToNextLevel) * 100}%` }}
-                  transition={{ type: "spring", stiffness: 50, damping: 15 }}
-                />
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <div className="flex items-center gap-4 w-64">
+              <div className="flex-1">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">XP Nível {stats.level}</span>
+                  <span className="text-slate-400 dark:text-slate-500">{stats.xp} / {stats.xpToNextLevel}</span>
+                </div>
+                <div className="xp-bar">
+                  <motion.div 
+                    className="xp-progress" 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(stats.xp / stats.xpToNextLevel) * 100}%` }}
+                    transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -262,51 +299,63 @@ export default function App() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <StatCard 
-                    title="Total de Questões" 
+                    title="Questões Respondidas" 
                     value={stats.totalQuestionsAnswered.toString()} 
                     subValue="+12 hoje"
-                    icon={<BrainCircuit className="text-medical-primary" />}
+                    icon={<BrainCircuit className="text-medical-primary" size={20} />}
                   />
                   <StatCard 
-                    title="Precisão" 
+                    title="Taxa de Precisão" 
                     value={`${Math.round((stats.correctAnswers / stats.totalQuestionsAnswered) * 100)}%`} 
-                    subValue="Top 5% dos estudantes"
-                    icon={<CheckCircle2 className="text-medical-accent" />}
+                    subValue="Acima da média"
+                    icon={<CheckCircle2 className="text-emerald-500" size={20} />}
                   />
-                  <StatCard 
-                    title="Tempo de Estudo" 
-                    value="24.5h" 
-                    subValue="Esta semana"
-                    icon={<Timer className="text-medical-secondary" />}
+                  <SidebarItem 
+                    icon={<Star size={18} />} 
+                    label={`${stats.gems} Gemas`} 
+                    active={false} 
+                    onClick={() => setActiveTab('profile')} 
                   />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="glass-panel rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                      <Award size={20} className="text-medical-primary" />
-                      Tendência de Desempenho
-                    </h3>
-                    <div className="h-64">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 glass-panel rounded-2xl p-8">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Análise de Rendimento</h3>
+                        <p className="text-xs text-slate-400 font-mono mt-1">DATA_STREAM: PERFORMANCE_METRICS</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-bold border border-emerald-500/20">ESTÁVEL</div>
+                        <div className="px-3 py-1 rounded-lg bg-medical-primary/10 text-medical-primary text-[10px] font-bold border border-medical-primary/20">TOP 5%</div>
+                      </div>
+                    </div>
+                    <div className="h-72">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={PERFORMANCE_DATA}>
                           <defs>
                             <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
+                              <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2}/>
                               <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                          <YAxis hide />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#1e293b" : "#f1f5f9"} />
+                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10, fontWeight: 600}} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                           <Tooltip 
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            contentStyle={{ 
+                              borderRadius: '12px', 
+                              border: '1px solid #e2e8f0', 
+                              boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                              backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                              color: darkMode ? '#f1f5f9' : '#1e293b'
+                            }}
                           />
                           <Area 
                             type="monotone" 
                             dataKey="score" 
                             stroke="#0ea5e9" 
-                            strokeWidth={3}
+                            strokeWidth={4}
                             fillOpacity={1} 
                             fill="url(#colorScore)" 
                           />
@@ -315,32 +364,69 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="glass-panel rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Módulos Recomendados</h3>
-                    <div className="space-y-4">
-                      {STUDY_MODULES.slice(0, 3).map(module => (
-                        <div 
-                          key={module.id} 
-                          className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-medical-primary/30 hover:bg-medical-primary/5 transition-all group cursor-pointer"
-                          onClick={() => startStudy(module)}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={cn(
-                              "w-10 h-10 rounded-lg flex items-center justify-center",
-                              module.category === 'Anatomia' ? "bg-red-100 text-red-600" :
-                              module.category === 'Fisiologia' ? "bg-blue-100 text-blue-600" :
-                              "bg-emerald-100 text-emerald-600"
-                            )}>
-                              <BookOpen size={20} />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-700">{module.title}</p>
-                              <p className="text-xs text-slate-400">{module.category} • {module.difficulty}</p>
-                            </div>
-                          </div>
-                          <ChevronRight size={18} className="text-slate-300 group-hover:text-medical-primary transition-colors" />
+                  <div className="space-y-6">
+                    <div className="glass-panel rounded-2xl p-6 bg-medical-primary text-white border-none shadow-lg shadow-medical-primary/20">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BrainCircuit size={16} />
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest opacity-80">Insight do Dia</h3>
+                      </div>
+                      <p className="text-xs font-medium leading-relaxed">
+                        "A tríade de Virchow (estase, lesão endotelial e hipercoagulabilidade) é fundamental para entender a patogênese da TVP."
+                      </p>
+                    </div>
+
+                    <div className="glass-panel rounded-2xl p-6 border-t-4 border-t-medical-primary">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-widest">Status do Sistema</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-500">Nível de Acesso</span>
+                          <span className="text-xs font-mono font-bold text-medical-primary">INTERNO_SR</span>
                         </div>
-                      ))}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-500">Especialidade</span>
+                          <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">CIRURGIA_GERAL</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                          <span className="text-xs text-slate-500">Próximo Desbloqueio</span>
+                          <span className="text-xs font-bold text-yellow-500">Caso Clínico #42</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-panel rounded-2xl p-6">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-widest">Leitura Atual</h3>
+                      <div className="flex gap-4">
+                        <div className="w-16 h-24 bg-slate-900 rounded shadow-lg flex items-center justify-center border border-slate-700">
+                          <Book size={24} className="text-medical-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">Cirurgia Médica</h4>
+                          <p className="text-[10px] text-slate-400 mt-1">Capítulo 3: Mastectomia</p>
+                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full mt-3 overflow-hidden">
+                            <div className="bg-medical-primary h-full w-[45%]" />
+                          </div>
+                          <p className="text-[8px] text-slate-500 mt-1">45% concluído</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-panel rounded-2xl p-6">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-widest">Atividade Recente</h3>
+                      <div className="space-y-3">
+                        {[
+                          { title: "Mastectomia", type: "ESTUDO", val: "+120 XP" },
+                          { title: "Anatomia Dental", type: "QUIZ", val: "+50 XP" },
+                          { title: "Bioética", type: "ESTUDO", val: "+80 XP" }
+                        ].map((act, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <div>
+                              <p className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{act.title}</p>
+                              <p className="text-[8px] text-slate-400 font-mono">{act.type}</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-emerald-500">{act.val}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -353,41 +439,156 @@ export default function App() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
+                className="space-y-8"
               >
                 {!selectedModule ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {STUDY_MODULES.map(module => (
-                      <div 
-                        key={module.id} 
-                        className="glass-panel rounded-2xl p-6 gamified-card relative overflow-hidden group"
-                        onClick={() => startStudy(module)}
-                      >
-                        <div className="absolute top-0 right-0 p-4">
-                          {module.completed && <CheckCircle2 className="text-medical-accent" size={20} />}
-                        </div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-medical-primary mb-2 block">
-                          {module.category}
-                        </span>
-                        <h4 className="text-lg font-bold text-slate-800 mb-4">{module.title}</h4>
-                        <div className="flex items-center justify-between mt-auto">
-                          <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-                            <Zap size={14} className="text-yellow-500" />
-                            {module.xpReward} XP
-                          </div>
-                          <button className="text-medical-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                            Estudar <ArrowRight size={16} />
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Biblioteca Profissional</h2>
+                      <div className="flex gap-2 overflow-x-auto pb-2 max-w-md md:max-w-none">
+                        <button 
+                          onClick={() => setSelectedCategory(null)}
+                          className={cn(
+                            "px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap",
+                            selectedCategory === null 
+                              ? "bg-medical-primary text-white shadow-md shadow-medical-primary/20" 
+                              : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
+                          )}
+                        >
+                          Todos
+                        </button>
+                        {categories.map(cat => (
+                          <button 
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={cn(
+                              "px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap",
+                              selectedCategory === cat 
+                                ? "bg-medical-primary text-white shadow-md shadow-medical-primary/20" 
+                                : "bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800"
+                            )}
+                          >
+                            {cat}
                           </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-3">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Livros Recomendados</h3>
+                        <div className="flex gap-6 overflow-x-auto pb-4">
+                          <div className="flex-shrink-0 w-48 h-64 bg-slate-900 rounded-xl p-4 flex flex-col justify-between shadow-xl border border-slate-800 relative group cursor-pointer overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                              <Book size={64} className="text-medical-primary" />
+                            </div>
+                            <div className="relative z-10">
+                              <span className="text-[8px] font-bold text-medical-primary uppercase tracking-widest">Editora Pasteur</span>
+                              <h4 className="text-sm font-bold text-white mt-2 leading-tight">Cirurgia Médica: Princípios e Práticas</h4>
+                            </div>
+                            <div className="relative z-10">
+                              <p className="text-[10px] text-slate-500">Edição 1 • 2023</p>
+                              <button 
+                                onClick={() => setSelectedCategory("Cirurgia")}
+                                className="mt-2 w-full py-2 bg-medical-primary text-white text-[10px] font-bold rounded-lg"
+                              >
+                                ABRIR LIVRO
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex-shrink-0 w-48 h-64 bg-slate-900 rounded-xl p-4 flex flex-col justify-between shadow-xl border border-slate-800 relative group cursor-pointer overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                              <GraduationCap size={64} className="text-emerald-500" />
+                            </div>
+                            <div className="relative z-10">
+                              <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">U. PORTO</span>
+                              <h4 className="text-sm font-bold text-white mt-2 leading-tight">Medicina Dentária: Patologias Orais</h4>
+                            </div>
+                            <div className="relative z-10">
+                              <p className="text-[10px] text-slate-500">Monografia • 2010</p>
+                              <button 
+                                onClick={() => setSelectedCategory("Medicina Dentária")}
+                                className="mt-2 w-full py-2 bg-emerald-500 text-white text-[10px] font-bold rounded-lg"
+                              >
+                                ABRIR LIVRO
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex-shrink-0 w-48 h-64 bg-slate-900 rounded-xl p-4 flex flex-col justify-between shadow-xl border border-slate-800 relative group cursor-pointer overflow-hidden">
+                            <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                              <Syringe size={64} className="text-blue-500" />
+                            </div>
+                            <div className="relative z-10">
+                              <span className="text-[8px] font-bold text-blue-500 uppercase tracking-widest">Manual Prático</span>
+                              <h4 className="text-sm font-bold text-white mt-2 leading-tight">Fundamentos de Enfermagem Geral</h4>
+                            </div>
+                            <div className="relative z-10">
+                              <p className="text-[10px] text-slate-500">Edição 4 • 2024</p>
+                              <button 
+                                onClick={() => setSelectedCategory("Enfermagem Geral")}
+                                className="mt-2 w-full py-2 bg-blue-500 text-white text-[10px] font-bold rounded-lg"
+                              >
+                                ABRIR LIVRO
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="flex-shrink-0 w-48 h-64 bg-white dark:bg-slate-900 rounded-xl p-4 flex flex-col justify-between shadow-md border border-slate-200 dark:border-slate-800 opacity-50 grayscale">
+                            <div className="text-center py-10">
+                              <Library size={32} className="mx-auto text-slate-300" />
+                              <p className="text-[10px] font-bold text-slate-400 mt-4">EM BREVE</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      {STUDY_MODULES
+                        .filter(m => !selectedCategory || m.category === selectedCategory)
+                        .map(module => (
+                        <div 
+                          key={module.id} 
+                          className="glass-panel rounded-2xl p-6 gamified-card relative overflow-hidden group flex flex-col border-l-4 border-l-medical-primary"
+                          onClick={() => startStudy(module)}
+                        >
+                          <div className="absolute top-0 right-0 p-4">
+                            {module.completed && <CheckCircle2 className="text-medical-accent" size={20} />}
+                          </div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="p-2 bg-medical-primary/10 rounded-lg text-medical-primary">
+                              {module.category === 'Medicina Dentária' ? <GraduationCap size={16} /> : 
+                               module.category === 'Enfermagem Geral' ? <Syringe size={16} /> :
+                               module.category === 'Cirurgia' ? <Stethoscope size={16} /> :
+                               <BookOpen size={16} />}
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              {module.category}
+                            </span>
+                          </div>
+                          <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2 leading-tight">{module.title}</h4>
+                          {module.description && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 line-clamp-2">{module.description}</p>
+                          )}
+                          <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50 dark:border-slate-800/50">
+                            <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                              <Zap size={14} className="text-yellow-500" />
+                              {module.xpReward} XP
+                            </div>
+                            <button className="text-medical-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                              Estudar <ArrowRight size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="glass-panel rounded-3xl p-8 max-w-4xl mx-auto">
                     <div className="flex items-center justify-between mb-8">
                       <button 
                         onClick={() => setSelectedModule(null)}
-                        className="text-slate-400 hover:text-slate-600 flex items-center gap-2 text-sm font-medium"
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-2 text-sm font-medium transition-colors"
                       >
                         <X size={18} /> Voltar para Biblioteca
                       </button>
@@ -402,10 +603,10 @@ export default function App() {
                     {loading ? (
                       <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <Loader2 className="animate-spin text-medical-primary" size={40} />
-                        <p className="text-slate-500 font-medium">Gerando conteúdo de alto rendimento...</p>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">Gerando conteúdo de alto rendimento...</p>
                       </div>
                     ) : (
-                      <div className="markdown-body prose prose-slate max-w-none">
+                      <div className="markdown-body prose prose-slate dark:prose-invert max-w-none">
                         <Markdown>{studyContent || ''}</Markdown>
                       </div>
                     )}
@@ -428,8 +629,8 @@ export default function App() {
                       <Zap size={48} className="text-medical-primary" />
                     </div>
                     <div>
-                      <h2 className="text-3xl font-bold text-slate-800 mb-2">Desafio Médico Diário</h2>
-                      <p className="text-slate-500">Teste seus conhecimentos e ganhe XP em dobro hoje!</p>
+                      <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Desafio Médico Diário</h2>
+                      <p className="text-slate-500 dark:text-slate-400">Teste seus conhecimentos e ganhe XP em dobro hoje!</p>
                     </div>
                     <button 
                       onClick={() => startQuiz("Conhecimento Médico Geral")}
@@ -454,12 +655,12 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Trophy className="text-yellow-500" size={20} />
-                        <span className="font-bold text-slate-700">{quizScore} Corretas</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-200">{quizScore} Corretas</span>
                       </div>
                     </div>
 
                     <div className="glass-panel rounded-3xl p-8 space-y-8">
-                      <h3 className="text-xl font-bold text-slate-800 leading-relaxed">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 leading-relaxed">
                         {quizQuestions[currentQuestionIndex].question}
                       </h3>
 
@@ -483,12 +684,12 @@ export default function App() {
                             className={cn(
                               "p-5 rounded-2xl text-left font-medium transition-all border-2 flex items-center justify-between",
                               selectedAnswer === null 
-                                ? "border-slate-100 hover:border-medical-primary hover:bg-medical-primary/5 text-slate-600"
+                                ? "border-slate-100 dark:border-slate-800 hover:border-medical-primary hover:bg-medical-primary/5 text-slate-600 dark:text-slate-400"
                                 : idx === quizQuestions[currentQuestionIndex].correctAnswer
-                                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-200/50"
+                                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-lg shadow-emerald-200/50"
                                   : selectedAnswer === idx
-                                    ? "border-red-500 bg-red-50 text-red-700 shadow-lg shadow-red-200/50"
-                                    : "border-slate-100 opacity-50 text-slate-400"
+                                    ? "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 shadow-lg shadow-red-200/50"
+                                    : "border-slate-100 dark:border-slate-800 opacity-50 text-slate-400 dark:text-slate-600"
                             )}
                           >
                             <span>{option}</span>
@@ -513,15 +714,15 @@ export default function App() {
                           <motion.div 
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-6 bg-slate-50 rounded-2xl border border-slate-200"
+                            className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800"
                           >
-                            <p className="text-sm font-bold text-slate-800 mb-2">Explicação</p>
-                            <p className="text-sm text-slate-600 leading-relaxed">
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Explicação</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                               {quizQuestions[currentQuestionIndex].explanation}
                             </p>
                             <button 
                               onClick={nextQuestion}
-                              className="mt-6 w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                              className="mt-6 w-full bg-slate-800 dark:bg-medical-primary text-white py-3 rounded-xl font-bold hover:bg-slate-700 dark:hover:bg-medical-primary/90 transition-all flex items-center justify-center gap-2"
                             >
                               {currentQuestionIndex === quizQuestions.length - 1 ? 'Finalizar Quiz' : 'Próxima Questão'}
                               <ArrowRight size={18} />
@@ -545,12 +746,12 @@ export default function App() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl font-bold text-slate-800">Loja de Recompensas</h2>
-                    <p className="text-slate-500 font-medium">Troque suas Gemas por vantagens exclusivas de estudo médico.</p>
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Loja de Recompensas</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Troque suas Gemas por vantagens exclusivas de estudo médico.</p>
                   </div>
-                  <div className="bg-yellow-50 border border-yellow-200 px-6 py-3 rounded-2xl flex items-center gap-3">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-6 py-3 rounded-2xl flex items-center gap-3">
                     <Star className="text-yellow-500 fill-yellow-500" size={24} />
-                    <span className="text-xl font-bold text-yellow-700">{stats.gems} Gemas</span>
+                    <span className="text-xl font-bold text-yellow-700 dark:text-yellow-500">{stats.gems} Gemas</span>
                   </div>
                 </div>
 
@@ -596,22 +797,22 @@ export default function App() {
 function RewardCard({ title, description, cost, icon, onBuy }: { title: string, description: string, cost: number, icon: React.ReactNode, onBuy: () => void }) {
   return (
     <motion.div 
-      whileHover={{ y: -8, scale: 1.02 }}
-      initial={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ y: -5 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="glass-panel rounded-2xl p-6 flex flex-col h-full"
+      className="glass-panel rounded-2xl p-6 flex flex-col h-full border-t-4 border-t-yellow-500"
     >
-      <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-4">
+      <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-lg flex items-center justify-center mb-4 border border-slate-100 dark:border-slate-700">
         {icon}
       </div>
-      <h4 className="text-lg font-bold text-slate-800 mb-2">{title}</h4>
-      <p className="text-sm text-slate-500 mb-6 flex-1">{description}</p>
+      <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-2">{title}</h4>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 flex-1 leading-relaxed">{description}</p>
       <button 
         onClick={onBuy}
-        className="w-full py-3 rounded-xl border-2 border-yellow-500 text-yellow-600 font-bold hover:bg-yellow-50 transition-all flex items-center justify-center gap-2 active:scale-95"
+        className="w-full py-2.5 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold uppercase tracking-widest hover:bg-medical-primary dark:hover:bg-medical-primary dark:hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-black/10"
       >
-        <Star size={16} className="fill-yellow-500" />
-        {cost} Gemas
+        <Star size={12} className="fill-yellow-500 text-yellow-500" />
+        RECOMPENSA: {cost} GEMAS
       </button>
     </motion.div>
   );
@@ -622,13 +823,13 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all",
+        "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all",
         active 
-          ? "bg-medical-primary text-white shadow-lg shadow-medical-primary/20" 
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+          ? "bg-medical-primary/10 text-medical-primary border border-medical-primary/20 shadow-sm" 
+          : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
       )}
     >
-      {icon}
+      <span className={cn(active ? "text-medical-primary" : "text-slate-500")}>{icon}</span>
       <span>{label}</span>
     </button>
   );
@@ -637,18 +838,20 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
 function StatCard({ title, value, subValue, icon }: { title: string, value: string, subValue: string, icon: React.ReactNode }) {
   return (
     <motion.div 
-      whileHover={{ y: -5 }}
-      initial={{ opacity: 0, y: 20 }}
+      whileHover={{ y: -4 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-panel rounded-2xl p-6 flex items-start justify-between"
+      className="glass-panel rounded-2xl p-6 flex items-center gap-5 border-l-4 border-l-medical-primary shadow-sm"
     >
-      <div>
-        <p className="text-sm font-medium text-slate-400 mb-1">{title}</p>
-        <h4 className="text-2xl font-bold text-slate-800 mb-1">{value}</h4>
-        <p className="text-xs font-bold text-emerald-500">{subValue}</p>
-      </div>
-      <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center">
+      <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-800">
         {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <h4 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{value}</h4>
+          <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">{subValue}</span>
+        </div>
       </div>
     </motion.div>
   );
